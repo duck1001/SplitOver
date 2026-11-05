@@ -1,0 +1,46 @@
+name: Build SplitOver (roothide)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Theos + SDK
+        run: |
+          set -e
+          export THEOS=$HOME/theos
+          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$THEOS"
+          git clone --depth 1 https://github.com/theos/sdks "$HOME/sdks-tmp"
+          mkdir -p "$THEOS/sdks"
+          cp -R "$HOME/sdks-tmp"/iPhoneOS16.5.sdk "$THEOS/sdks/" || \
+            cp -R "$HOME/sdks-tmp"/iPhoneOS15.6.sdk "$THEOS/sdks/"
+          ls "$THEOS/sdks"
+
+      - name: Build roothide package
+        run: |
+          set -e
+          export THEOS="$HOME/theos"
+          export PATH="$THEOS/bin:$PATH"
+          make package FINALPACKAGE=1 \
+            THEOS_PACKAGE_SCHEME=roothide \
+            ARCHS="arm64e" \
+            TARGET=iphone:clang:16.5:15.0 \
+            DEBUG=0
+
+      - name: Show package info
+        run: |
+          ls -l packages/ || true
+          for f in packages/*.deb; do echo "== $f"; dpkg-deb -I "$f" 2>/dev/null || true; done
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: SplitOver-roothide-deb
+          path: packages/*.deb
+          if-no-files-found: error

@@ -1,0 +1,8 @@
+{
+    entry = {
+        bundle = "SplitOverPrefs";
+        cell = PSLinkCell;
+        detail = "SORootListController";
+        label = "SplitOver";
+    };
+}
