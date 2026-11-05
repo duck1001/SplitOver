@@ -4,6 +4,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 #define SO_PREFS_DOMAIN  @"com.duck1001.splitover"
 #define SO_PREFS_CHANGED @"com.duck1001.splitover/prefsChanged"
