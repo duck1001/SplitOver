@@ -22,7 +22,7 @@ jobs:
       - name: Install Theos + SDK
         run: |
           set -e
-          git clone --recursive --depth 1 https://github.com/theos/theos.git "$HOME/theos"
+          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$HOME/theos"
           git clone --depth 1 https://github.com/theos/sdks "$HOME/sdks-tmp"
           mkdir -p "$HOME/theos/sdks"
           cp -R "$HOME/sdks-tmp/iPhoneOS16.5.sdk" "$HOME/theos/sdks/"
