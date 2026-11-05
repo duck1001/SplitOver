@@ -46,6 +46,8 @@ static CGRect SOUsableScreen(void) {
 @interface SOWindowManager ()
 @property (nonatomic, strong) NSMutableArray<SOWindowView *> *mutableWindows;
 @property (nonatomic, weak) SOWindowView *focused;
+- (void)_animateWindowIn:(SOWindowView *)window fromPoint:(CGPoint)point snap:(SOSnap)snap;
+- (void)_launchIfNeeded:(NSString *)bundleID;
 @end
 
 @implementation SOWindowManager
