@@ -144,6 +144,30 @@ static CGRect SOUsableScreen(void) {
     }
 }
 
+#pragma mark - 出场动画
+
+- (void)_animateWindowIn:(SOWindowView *)window fromPoint:(CGPoint)point snap:(SOSnap)snap {
+    CGRect target = (snap == SOSnapFree)
+        ? window.frame
+        : [SOSnapGeometry frameForSnap:snap screen:SOUsableScreen() gap:SOSettings.shared.snapGap];
+
+    BOOL fromWheel = !CGPointEqualToPoint(point, CGPointZero);
+    CGPoint originCenter = fromWheel ? point : CGPointMake(CGRectGetMidX(target), CGRectGetMidY(target));
+
+    window.alpha = 0;
+    window.transform = CGAffineTransformMakeScale(fromWheel ? 0.18 : 0.88, fromWheel ? 0.18 : 0.88);
+    window.frame = CGRectMake(window.frame.origin.x, window.frame.origin.y,
+                              target.size.width, target.size.height);
+    window.center = originCenter;
+
+    [UIView animateWithDuration:0.42 delay:0 usingSpringWithDamping:0.78 initialSpringVelocity:0.9
+                        options:UIViewAnimationOptionBeginFromCurrentState animations:^{
+        window.alpha = SOSettings.shared.windowOpacity;
+        window.transform = CGAffineTransformIdentity;
+        window.frame = target;
+    } completion:nil];
+}
+
 #pragma mark - 关窗
 
 - (void)closeWindow:(SOWindowView *)window {
