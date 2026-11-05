@@ -17,6 +17,7 @@
 @property (nonatomic, readonly) SOWindowView *focusedWindow;
 
 - (SOWindowView *)openBundleID:(NSString *)bundleID snap:(SOSnap)snap;
+- (SOWindowView *)openBundleID:(NSString *)bundleID sceneID:(NSString *)sceneID snap:(SOSnap)snap;
 // 从圆盘图标位置长出来（丝滑呼出）
 - (SOWindowView *)openBundleID:(NSString *)bundleID snap:(SOSnap)snap fromPoint:(CGPoint)point;
 - (void)closeWindow:(SOWindowView *)window;

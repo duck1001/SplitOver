@@ -87,6 +87,13 @@ static NSString *const kSOOpacity         = @"windowOpacity";
 - (BOOL)gestureInApps        { return [self boolForKey:@"gestureInApps" fallback:YES]; }
 - (BOOL)keepAlive            { return [self boolForKey:@"keepAlive" fallback:YES]; }
 - (BOOL)forceMultiwindow     { return [self boolForKey:@"forceMultiwindow" fallback:YES]; }
+- (BOOL)hapticsEnabled       { return [self boolForKey:@"hapticsEnabled" fallback:YES]; }
+- (BOOL)dimBackdrop          { return [self boolForKey:@"dimBackdrop" fallback:YES]; }
+
+- (CGFloat)wheelIconSize { return MAX(40.0, MIN(72.0, [self doubleForKey:@"wheelIconSize" fallback:54.0])); }
+- (CGFloat)wheelRadius   { return MAX(0.0, [self doubleForKey:@"wheelRadius" fallback:0.0]); }
+- (CGFloat)snapDuration  { return MAX(0.08, MIN(0.6, [self doubleForKey:@"snapDuration" fallback:0.22])); }
+- (CGFloat)floatWidth    { return MAX(0.4, MIN(1.0, [self doubleForKey:@"floatWidth" fallback:0.72])); }
 
 - (SOPadCorner)padCorner {
     return (SOPadCorner)[self doubleForKey:@"padCorner" fallback:SOPadCornerRight];

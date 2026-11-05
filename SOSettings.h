@@ -38,6 +38,13 @@ typedef NS_ENUM(NSInteger, SOPadCorner) {
 @property (nonatomic, readonly) CGFloat cornerRadius;
 @property (nonatomic, readonly) CGFloat windowOpacity;
 
+@property (nonatomic, readonly) BOOL hapticsEnabled;
+@property (nonatomic, readonly) CGFloat wheelIconSize;
+@property (nonatomic, readonly) CGFloat wheelRadius;      // 0 = 自动
+@property (nonatomic, readonly) CGFloat snapDuration;
+@property (nonatomic, readonly) BOOL dimBackdrop;
+@property (nonatomic, readonly) CGFloat floatWidth;       // 自由浮窗宽度占比
+
 @property (nonatomic, readonly) BOOL keepAlive;          // 后台保活（RBS 断言）
 @property (nonatomic, readonly) BOOL forceMultiwindow;   // 强制 App 支持多窗口
 

@@ -9,13 +9,13 @@
 #import "SOWindowManager.h"
 #import "SOOverlayWindow.h"
 
-static const CGFloat kSOWheelIconSize = 54.0;
 static const CGFloat kSOWheelHubSize  = 54.0;
 
 #pragma mark - 单个图标
 
 @interface SOWheelItemView : UIView
 @property (nonatomic, copy) NSString *bundleID;
+- (instancetype)initWithBundleID:(NSString *)bundleID size:(CGFloat)size;
 @property (nonatomic, strong) UIImageView *iconView;
 @property (nonatomic, strong) UILabel *nameLabel;
 @property (nonatomic, assign) CGFloat angle;
@@ -23,8 +23,8 @@ static const CGFloat kSOWheelHubSize  = 54.0;
 
 @implementation SOWheelItemView
 
-- (instancetype)initWithBundleID:(NSString *)bundleID {
-    if ((self = [super initWithFrame:CGRectMake(0, 0, kSOWheelIconSize, kSOWheelIconSize)])) {
+- (instancetype)initWithBundleID:(NSString *)bundleID size:(CGFloat)size {
+    if ((self = [super initWithFrame:CGRectMake(0, 0, size, size)])) {
         _bundleID = [bundleID copy];
 
         UIVisualEffectView *blur = [[UIVisualEffectView alloc] initWithEffect:
@@ -35,9 +35,9 @@ static const CGFloat kSOWheelHubSize  = 54.0;
         blur.userInteractionEnabled = NO;
         [self addSubview:blur];
 
-        _iconView = [[UIImageView alloc] initWithFrame:CGRectInset(self.bounds, 7, 7)];
+        _iconView = [[UIImageView alloc] initWithFrame:CGRectInset(self.bounds, size * 0.13, size * 0.13)];
         _iconView.contentMode = UIViewContentModeScaleAspectFit;
-        _iconView.image = [SOAppHelper iconForBundleID:bundleID size:kSOWheelIconSize * 2];
+        _iconView.image = [SOAppHelper iconForBundleID:bundleID size:size * 2];
         _iconView.layer.cornerRadius = 10;
         _iconView.layer.masksToBounds = YES;
         [self addSubview:_iconView];
@@ -79,7 +79,8 @@ static const CGFloat kSOWheelHubSize  = 54.0;
         _apps = [apps copy];
         _items = [NSMutableArray array];
         _selectedIndex = -1;
-        self.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.001];
+        self.backgroundColor = SOSettings.shared.dimBackdrop
+            ? [UIColor colorWithWhite:0.0 alpha:0.14] : [UIColor colorWithWhite:0.0 alpha:0.001];
 
         [self _buildHint];
         [self _buildGhost];
@@ -111,9 +112,9 @@ static const CGFloat kSOWheelHubSize  = 54.0;
 }
 
 - (void)_buildItems {
+    CGFloat size = SOSettings.shared.wheelIconSize;
     for (NSString *bundleID in self.apps) {
-        SOWheelItemView *item = [[SOWheelItemView alloc] initWithBundleID:bundleID];
-        UIPanGestureRecognizer *none = nil; (void)none;
+        SOWheelItemView *item = [[SOWheelItemView alloc] initWithBundleID:bundleID size:size];
         [self addSubview:item];
         [self.items addObject:item];
     }
@@ -147,7 +148,8 @@ static const CGFloat kSOWheelHubSize  = 54.0;
                           screen.height - bottomInset - 26);
 
     NSInteger n = MAX(1, (NSInteger)self.items.count);
-    _radius = MIN(232.0, 118.0 + n * 18.0);
+    CGFloat fixedRadius = SOSettings.shared.wheelRadius;
+    _radius = fixedRadius > 0 ? fixedRadius : MIN(232.0, 118.0 + n * 18.0);
 
     self.hub.center = _anchor;
     self.hintLabel.frame = CGRectMake(0, _anchor.y - _radius - 34, screen.width, 16);
@@ -211,7 +213,7 @@ static const CGFloat kSOWheelHubSize  = 54.0;
     else
         self.hubLabel.text = @"分屏";
 
-    if (haptic && changed) {
+    if (haptic && changed && SOSettings.shared.hapticsEnabled) {
         UISelectionFeedbackGenerator *gen = [UISelectionFeedbackGenerator new];
         [gen selectionChanged];
     }
@@ -296,8 +298,10 @@ static const CGFloat kSOWheelHubSize  = 54.0;
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleTap:)];
     [self.wheel addGestureRecognizer:tap];
 
-    UIImpactFeedbackGenerator *gen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
-    [gen impactOccurred];
+    if (SOSettings.shared.hapticsEnabled) {
+        UIImpactFeedbackGenerator *gen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+        [gen impactOccurred];
+    }
 }
 
 - (void)setSticky:(BOOL)sticky { _sticky = sticky; }
@@ -340,8 +344,10 @@ static const CGFloat kSOWheelHubSize  = 54.0;
     SOSnap side = (corner == SOWheelCornerLeft) ? SOSnapLeft : SOSnapRight;
     [[SOWindowManager shared] splitWithBundleID:bundleID side:side fromPoint:origin];
 
-    UINotificationFeedbackGenerator *gen = [UINotificationFeedbackGenerator new];
-    [gen notificationOccurred:UINotificationFeedbackTypeSuccess];
+    if (SOSettings.shared.hapticsEnabled) {
+        UINotificationFeedbackGenerator *gen = [UINotificationFeedbackGenerator new];
+        [gen notificationOccurred:UINotificationFeedbackTypeSuccess];
+    }
 }
 
 - (void)dismiss {

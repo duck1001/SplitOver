@@ -75,7 +75,7 @@ static void SOAcquireAssertion(NSString *bundleID) {
         id app = [[ctrl performSelector:@selector(sharedInstance)]
                   performSelector:@selector(applicationWithBundleIdentifier:) withObject:bundleID];
         int pid = 0;
-        if ([app respondsToSelector:@selector(pid)]) pid = (int)[app performSelector:@selector(pid)];
+        if ([app respondsToSelector:@selector(pid)]) pid = [app pid];
         if (pid <= 0) return;
 
         Class targetClass = NSClassFromString(@"RBSTarget");
@@ -200,7 +200,7 @@ static void SOReleaseAssertion(NSString *bundleID) {
     NSString *sceneID = SOSceneIDFromLayout(layout);
     if (!bundleID.length) return;
 
-    [[SOWindowManager shared] openBundleID:bundleID snap:SOSnapRight];
+    [[SOWindowManager shared] openBundleID:bundleID sceneID:sceneID snap:SOSnapRight];
     SOAcquireAssertion(bundleID);
 
     Class switcherClass = NSClassFromString(@"SBMainSwitcherViewController");

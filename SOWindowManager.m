@@ -67,7 +67,13 @@ static CGRect SOUsableScreen(void) {
 #pragma mark - 开窗
 
 - (SOWindowView *)openBundleID:(NSString *)bundleID snap:(SOSnap)snap {
-    return [self openBundleID:bundleID snap:snap fromPoint:CGPointZero];
+    return [self openBundleID:bundleID sceneID:nil snap:snap];
+}
+
+- (SOWindowView *)openBundleID:(NSString *)bundleID sceneID:(NSString *)sceneID snap:(SOSnap)snap {
+    SOWindowView *window = [self openBundleID:bundleID snap:snap fromPoint:CGPointZero];
+    window.sceneID = sceneID;
+    return window;
 }
 
 - (SOWindowView *)openBundleID:(NSString *)bundleID snap:(SOSnap)snap fromPoint:(CGPoint)point {
@@ -92,7 +98,15 @@ static CGRect SOUsableScreen(void) {
     if (!root) return nil;
 
     SOWindowView *window = [[SOWindowView alloc] initWithContentView:nil bundleID:bundleID scene:nil];
-    window.frame = CGRectMake(40, 120, 320, 440);
+    if (snap == SOSnapFree) {
+        CGRect screen = SOUsableScreen();
+        CGFloat width = screen.size.width * SOSettings.shared.floatWidth;
+        CGFloat height = screen.size.height * 0.62;
+        window.frame = CGRectMake(CGRectGetMaxX(screen) - width - 16,
+                                  screen.origin.y + 48, width, height);
+    } else {
+        window.frame = CGRectMake(40, 120, 320, 440);
+    }
     __weak typeof(self) weakSelf = self;
     window.onClose = ^(SOWindowView *w) { [weakSelf closeWindow:w]; };
     window.onFocus = ^(SOWindowView *w) { [weakSelf bringToFront:w]; };
@@ -117,7 +131,7 @@ static CGRect SOUsableScreen(void) {
 
 - (void)_attachSceneForBundleID:(NSString *)bundleID toWindow:(SOWindowView *)window attempts:(int)attempts {
     if (!window.isOpen) return;
-    FBScene *scene = [SOSceneHelper sceneForBundleID:bundleID];
+    FBScene *scene = [SOSceneHelper sceneForBundleID:bundleID sceneID:window.sceneID];
     if (!scene && attempts == 0) {
         // 没在跑就后台挂起拉起，进程起来后场景才会出现（不能让 App 切前台盖住当前 App）
         Class springboard = NSClassFromString(@"SpringBoard");
@@ -213,7 +227,7 @@ static CGRect SOUsableScreen(void) {
     if (snap == SOSnapFree) return;   // 自由浮动保留当前 frame
 
     CGRect frame = [SOSnapGeometry frameForSnap:snap screen:SOUsableScreen() gap:SOSettings.shared.snapGap];
-    [UIView animateWithDuration:0.22 delay:0 usingSpringWithDamping:0.9 initialSpringVelocity:0.4
+    [UIView animateWithDuration:SOSettings.shared.snapDuration delay:0 usingSpringWithDamping:0.9 initialSpringVelocity:0.4
                         options:UIViewAnimationOptionBeginFromCurrentState animations:^{
         window.frame = frame;
         [window layoutIfNeeded];

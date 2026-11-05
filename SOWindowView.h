@@ -21,6 +21,7 @@ typedef NS_ENUM(NSInteger, SOSnap) {
 @interface SOWindowView : UIView
 
 @property (nonatomic, copy) NSString *bundleID;
+@property (nonatomic, copy) NSString *sceneID;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) FBScene *scene;
 @property (nonatomic, assign) SOSnap snap;

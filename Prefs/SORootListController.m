@@ -12,6 +12,53 @@
 
 @implementation SORootListController
 
+- (NSArray *)specifiers {
+    NSArray *specs = [super specifiers];
+
+    static NSDictionary<NSString *, UIImage *> *icons;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSDictionary *names = @{
+            @"enabled": @"power",
+            @"padEnabled": @"circle.grid.2x2",
+            @"padCorner": @"square.grid.2x2",
+            @"padAutoCollapse": @"rectangle.compress.vertical",
+            @"wheelIconSize": @"arrow.up.left.and.arrow.down.right",
+            @"wheelRadius": @"circle.dashed",
+            @"dimBackdrop": @"circle.lefthalf.filled",
+            @"hapticsEnabled": @"hand.tap",
+            @"gestureEdgeSwipe": @"hand.draw",
+            @"gestureThreeFinger": @"hand.point.up.left",
+            @"gestureStatusBarDoubleTap": @"rectangle.topthird.inset.filled",
+            @"gestureHomeLongPress": @"iphone.homebutton",
+            @"edgeSensitivity": @"slider.horizontal.3",
+            @"snapGap": @"rectangle.split.3x1",
+            @"cornerRadius": @"app",
+            @"windowOpacity": @"eye",
+            @"snapDuration": @"timer",
+            @"floatWidth": @"rectangle.portrait.arrowtriangle.2.outward",
+            @"keepAlive": @"bolt.horizontal",
+            @"forceMultiwindow": @"square.stack.3d.up",
+        };
+        NSMutableDictionary *images = [NSMutableDictionary dictionary];
+        for (NSString *key in names) {
+            UIImage *image = [UIImage systemImageNamed:names[key]];
+            if (image) images[key] = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        }
+        icons = images;
+    });
+
+    for (PSSpecifier *spec in specs) {
+        NSString *key = [spec propertyForKey:@"key"];
+        UIImage *image = key ? icons[key] : nil;
+        if (!image && [spec propertyForKey:@"detail"]) {
+            image = [[UIImage systemImageNamed:@"app.badge"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        }
+        if (image) [spec setProperty:image forKey:@"icon"];
+    }
+    return specs;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"SplitOver";

@@ -123,6 +123,14 @@ enum { BKSProcessAssertionReasonBackgroundUI = 7 };
 - (id)floatingItem;
 @end
 
+@interface SBDisplayItem : NSObject
+@property (nonatomic, readonly) NSString *bundleIdentifier;
+@property (nonatomic, readonly) NSString *uniqueIdentifier;
++ (id)displayItemWithType:(long long)type
+        bundleIdentifier:(NSString *)bundleID
+        uniqueIdentifier:(NSString *)uniqueID;
+@end
+
 @interface SBFluidSwitcherItemContainer : UIView
 - (id)appLayout;
 @end
