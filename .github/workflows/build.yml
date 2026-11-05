@@ -11,17 +11,20 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install ldid
+      - name: Install toolchain
         run: |
           set -e
-          brew install ldid
-          command -v ldid
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq make git clang lld llvm dpkg-dev fakeroot zip unzip xz-utils libplist-dev libssl-dev curl
+          sudo curl -fL https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_x86_64 -o /usr/local/bin/ldid
+          sudo chmod +x /usr/local/bin/ldid
+          ldid -v || true
 
-      - name: Install Theos + SDK
+      - name: Install Theos (roothide) + SDK
         run: |
           set -e
           export THEOS=$HOME/theos
@@ -29,7 +32,16 @@ jobs:
           git clone --depth 1 https://github.com/theos/sdks "$HOME/sdks-tmp"
           mkdir -p "$THEOS/sdks"
           cp -R "$HOME/sdks-tmp/iPhoneOS16.5.sdk" "$THEOS/sdks/"
-          ls "$THEOS/sdks"
+
+          # roothide/theos 只带 macOS 工具链，Linux 上把系统 LLVM 软链过去
+          BIN="$THEOS/toolchain/linux/iphone/bin"
+          mkdir -p "$BIN"
+          for tool in clang clang++ llvm-ar llvm-nm llvm-strip llvm-objcopy llvm-objdump; do
+            ln -sf "$(command -v $tool)" "$BIN/$tool"
+          done
+          ln -sf "$(command -v ld64.lld || command -v ld.lld)" "$BIN/ld"
+          ln -sf /usr/local/bin/ldid "$BIN/ldid"
+          ls -l "$BIN"
 
       - name: Build roothide package
         run: |
