@@ -5,28 +5,31 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install toolchain
+      - name: Install ldid
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq make git clang lld dpkg-dev fakeroot zip unzip xz-utils libplist-dev libssl-dev libtinfo6 curl
-          sudo curl -fL https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_x86_64 -o /usr/local/bin/ldid
-          sudo chmod +x /usr/local/bin/ldid
-          ldid -v || true
+          set -e
+          brew install ldid
+          command -v ldid
 
       - name: Install Theos + SDK
         run: |
           set -e
-          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$HOME/theos"
+          export THEOS=$HOME/theos
+          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$THEOS"
           git clone --depth 1 https://github.com/theos/sdks "$HOME/sdks-tmp"
-          mkdir -p "$HOME/theos/sdks"
-          cp -R "$HOME/sdks-tmp/iPhoneOS16.5.sdk" "$HOME/theos/sdks/"
-          ls "$HOME/theos/sdks"
+          mkdir -p "$THEOS/sdks"
+          cp -R "$HOME/sdks-tmp/iPhoneOS16.5.sdk" "$THEOS/sdks/"
+          ls "$THEOS/sdks"
 
       - name: Build roothide package
         run: |
