@@ -5,6 +5,8 @@
 
 #import "SOPrivate.h"
 
+@class SOSceneHost;
+
 typedef NS_ENUM(NSInteger, SOSnap) {
     SOSnapFree = 0,
     SOSnapFull,
@@ -22,7 +24,7 @@ typedef NS_ENUM(NSInteger, SOSnap) {
 
 @property (nonatomic, copy) NSString *bundleID;
 @property (nonatomic, copy) NSString *sceneID;
-@property (nonatomic, strong) id sceneHost;   // SOSceneHost
+@property (nonatomic, strong) SOSceneHost *sceneHost;
 @property (nonatomic, assign) SOSnap snap;
 @property (nonatomic, assign) BOOL isOpen;
 
