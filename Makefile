@@ -22,7 +22,8 @@ SplitOver_FILES = Tweak.x \
 	SOWindowManager.m \
 	SOWheelController.m \
 	SOGestureController.m \
-	SOAppHelper.m
+	SOAppHelper.m \
+	SOSceneHost.m
 SplitOver_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-function
 SplitOver_FRAMEWORKS = UIKit CoreGraphics QuartzCore CoreFoundation Foundation
 SplitOver_LIBRARIES = substrate

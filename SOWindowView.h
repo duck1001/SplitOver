@@ -22,8 +22,7 @@ typedef NS_ENUM(NSInteger, SOSnap) {
 
 @property (nonatomic, copy) NSString *bundleID;
 @property (nonatomic, copy) NSString *sceneID;
-@property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) FBScene *scene;
+@property (nonatomic, strong) id sceneHost;   // SOSceneHost
 @property (nonatomic, assign) SOSnap snap;
 @property (nonatomic, assign) BOOL isOpen;
 

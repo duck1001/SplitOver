@@ -7,6 +7,7 @@
 #import "SOOverlayWindow.h"
 #import "SOWheelController.h"
 #import "SOSettings.h"
+#import "SOWindowManager.h"
 
 @interface SOGestureController () <UIGestureRecognizerDelegate>
 @property (nonatomic, strong) NSMutableArray<UIGestureRecognizer *> *zoneRecognizers;
@@ -55,6 +56,13 @@
         tap.delegate = self;
         [zone addGestureRecognizer:tap];
         [self.zoneRecognizers addObject:tap];
+
+        // 长按角落 0.8s = 急停：关掉所有悬浮窗并收起圆盘
+        UILongPressGestureRecognizer *panic = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(zonePanic:)];
+        panic.minimumPressDuration = 0.8;
+        panic.delegate = self;
+        [zone addGestureRecognizer:panic];
+        [self.zoneRecognizers addObject:panic];
     }
 }
 
@@ -92,6 +100,14 @@
             break;
         default: break;
     }
+}
+
+- (void)zonePanic:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state != UIGestureRecognizerStateBegan) return;
+    [[SOWheelController shared] dismiss];
+    [[SOWindowManager shared] closeAll];
+    UINotificationFeedbackGenerator *gen = [UINotificationFeedbackGenerator new];
+    if (SOSettings.shared.hapticsEnabled) [gen notificationOccurred:UINotificationFeedbackTypeWarning];
 }
 
 - (void)zoneTap:(UITapGestureRecognizer *)gesture {

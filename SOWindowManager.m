@@ -125,71 +125,20 @@ static CGRect SOUsableScreen(void) {
     [self applySnap:snap toWindow:window];
     [self bringToFront:window];
 
-    [self _attachSceneForBundleID:bundleID toWindow:window attempts:0];
+    [self _launchIfNeeded:bundleID];
     return window;
 }
 
-- (void)_attachSceneForBundleID:(NSString *)bundleID toWindow:(SOWindowView *)window attempts:(int)attempts {
-    if (!window.isOpen) return;
-    FBScene *scene = [SOSceneHelper sceneForBundleID:bundleID sceneID:window.sceneID];
-    if (!scene && attempts == 0) {
-        // 没在跑就后台挂起拉起，进程起来后场景才会出现（不能让 App 切前台盖住当前 App）
-        Class springboard = NSClassFromString(@"SpringBoard");
-        if ([springboard instancesRespondToSelector:@selector(launchApplicationWithIdentifier:suspended:)]) {
+- (void)_launchIfNeeded:(NSString *)bundleID {
+    if ([SOSceneHelper sceneForBundleID:bundleID]) return;
+    Class springboardClass = NSClassFromString(@"SpringBoard");
+    if ([springboardClass instancesRespondToSelector:@selector(launchApplicationWithIdentifier:suspended:)]) {
+        @try {
             [(id)[UIApplication sharedApplication] launchApplicationWithIdentifier:bundleID suspended:YES];
+        } @catch (NSException *e) {
+            NSLog(@"[SplitOver] suspended launch failed %@: %@", bundleID, e);
         }
     }
-    if (!scene && attempts < 30) {
-        __weak typeof(self) weakSelf = self;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-            [weakSelf _attachSceneForBundleID:bundleID toWindow:window attempts:attempts + 1];
-        });
-        return;
-    }
-    if (!scene) {
-        NSLog(@"[SplitOver] scene not found for %@ after %d tries", bundleID, attempts);
-        return;
-    }
-    [SOSceneHelper setScene:scene foreground:YES];
-    UIView *content = [SOSceneHelper createLayerHostViewForScene:scene];
-    if (!content) {
-        NSLog(@"[SplitOver] no layer host for %@", bundleID);
-        return;
-    }
-    window.scene = scene;
-    window.contentView = content;
-    content.alpha = 0;
-    [window relayoutContent];
-    [window updateLayers];
-    [UIView animateWithDuration:0.28 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-        content.alpha = 1;
-    } completion:nil];
-    [window setNeedsLayout];
-}
-
-#pragma mark - 出场动画
-
-- (void)_animateWindowIn:(SOWindowView *)window fromPoint:(CGPoint)point snap:(SOSnap)snap {
-    CGRect target = (snap == SOSnapFree)
-        ? window.frame
-        : [SOSnapGeometry frameForSnap:snap screen:SOUsableScreen() gap:SOSettings.shared.snapGap];
-
-    BOOL fromWheel = !CGPointEqualToPoint(point, CGPointZero);
-    CGPoint originCenter = fromWheel ? point : CGPointMake(CGRectGetMidX(target), CGRectGetMidY(target));
-
-    window.alpha = 0;
-    window.transform = CGAffineTransformMakeScale(fromWheel ? 0.18 : 0.88, fromWheel ? 0.18 : 0.88);
-    window.center = originCenter;
-    window.frame = CGRectMake(window.frame.origin.x, window.frame.origin.y,
-                              target.size.width, target.size.height);
-    window.center = originCenter;
-
-    [UIView animateWithDuration:0.42 delay:0 usingSpringWithDamping:0.78 initialSpringVelocity:0.9
-                        options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-        window.alpha = SOSettings.shared.windowOpacity;
-        window.transform = CGAffineTransformIdentity;
-        window.frame = target;
-    } completion:nil];
 }
 
 #pragma mark - 关窗
@@ -197,6 +146,7 @@ static CGRect SOUsableScreen(void) {
 - (void)closeWindow:(SOWindowView *)window {
     if (!window) return;
     window.isOpen = NO;
+    [window.sceneHost invalidate];
     [SOSceneHelper stopKeepAliveForBundleID:window.bundleID];
     [SOOverlayWindow removeWindowed:window.bundleID];
 

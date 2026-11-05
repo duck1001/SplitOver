@@ -233,6 +233,7 @@ static const CGFloat kSOWheelHubSize  = 54.0;
 @property (nonatomic, assign) SOWheelCorner corner;
 @property (nonatomic, assign) BOOL presented;
 @property (nonatomic, assign) BOOL sticky;
+@property (nonatomic, assign) NSUInteger presentToken;
 @end
 
 @implementation SOWheelController
@@ -279,7 +280,12 @@ static const CGFloat kSOWheelHubSize  = 54.0;
     [root bringSubviewToFront:self.wheel];
 
     self.presented = YES;
+    self.presentToken += 1;
+    NSUInteger token = self.presentToken;
     [self.wheel layoutIfNeeded];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 8 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        if (self.presentToken == token && self.presented) [self dismiss];
+    });
 
     // 逐个弹出
     for (NSInteger i = 0; i < (NSInteger)self.wheel.items.count; i++) {

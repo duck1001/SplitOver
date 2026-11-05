@@ -9,6 +9,7 @@
 #import "SOOverlayWindow.h"
 #import "SOAppHelper.h"
 #import "SOWindowManager.h"
+#import "SOSceneHost.h"
 
 static const CGFloat kSOTitleHeight = 30.0;
 
@@ -39,8 +40,6 @@ static const CGFloat kSOTitleHeight = 30.0;
                               scene:(FBScene *)scene {
     if ((self = [super initWithFrame:CGRectMake(0, 0, 320, 420)])) {
         _bundleID = [bundleID copy];
-        _scene = scene;
-        _contentView = contentView;
         _isOpen = YES;
         _snap = SOSnapFree;
 
@@ -82,10 +81,11 @@ static const CGFloat kSOTitleHeight = 30.0;
         _mainView.backgroundColor = [UIColor blackColor];
         _mainView.clipsToBounds = YES;
         [self addSubview:_mainView];
-        if (_contentView) {
-            _contentView.opaque = NO;
-            [_mainView addSubview:_contentView];
-        }
+        // 场景宿主自己负责挂载 / 重连 / 快照兜底，不会再出现纯黑窗口
+        _sceneHost = [[SOSceneHost alloc] initWithBundleID:bundleID];
+        _sceneHost.view.frame = _mainView.bounds;
+        _sceneHost.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [_mainView addSubview:_sceneHost.view];
 
         // 左右下角缩放手柄
         _resizeHandle = [self _cornerGrip];
@@ -157,83 +157,22 @@ static const CGFloat kSOTitleHeight = 30.0;
     self.resizeHandle.frame = CGRectMake(width - 26, h - 26, 26, 26);
     self.resizeHandleLeft.frame = CGRectMake(0, h - 26, 26, 26);
     CGFloat closeWidth = MAX(70.0, width * 0.42);
-    self.bottomCloseZone.frame = CGRectMake((width - closeWidth) / 2.0, h - 24, closeWidth, 24);
+    self.bottomCloseZone.frame = CGRectMake((width - closeWidth) / 2.0, h - 34, closeWidth, 34);
     UIView *pill = self.bottomCloseZone.subviews.firstObject;
     pill.frame = CGRectMake((closeWidth - 34) / 2.0, 9, 34, 4);
     [self relayoutContent];
 }
 
 - (void)relayoutContent {
-    if (!self.contentView) return;
-    CGSize screen = [UIScreen mainScreen].bounds.size;
-    CGSize target = self.mainView.bounds.size;
-    if (target.width <= 1 || target.height <= 1) return;
-
-    BOOL scaleMode = [SOSettings.shared scaleModeForBundleID:self.bundleID];
-
-    if (scaleMode) {
-        // 真·缩放：让 App 以为自己是 mainFrame 这么大
-        self.contentView.transform = CGAffineTransformIdentity;
-        self.contentView.frame = CGRectMake(0, 0, target.width, target.height);
-        [self _updateSceneFrame:CGRectMake(0, 0, target.width, target.height)];
-    } else {
-        // 画面整屏渲染后等比缩进窗口
-        self.contentView.transform = CGAffineTransformIdentity;
-        self.contentView.frame = CGRectMake(0, 0, screen.width, screen.height);
-        CGFloat scale = MIN(target.width / screen.width, target.height / screen.height);
-        self.contentView.transform = CGAffineTransformMakeScale(scale, scale);
-        self.contentView.center = CGPointMake(target.width / 2.0, target.height / 2.0);
-    }
-    for (UIView *sub in self.contentView.subviews) {
-        sub.frame = self.contentView.bounds;
-        sub.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    }
-}
-
-- (void)_updateSceneFrame:(CGRect)frame {
-    if (!self.scene) return;
-    @try {
-        id mutable = [self.scene respondsToSelector:@selector(mutableSettings)]
-            ? [self.scene mutableSettings] : nil;
-        if (!mutable || ![mutable respondsToSelector:@selector(setFrame:)]) return;
-        NSMethodSignature *sig = [mutable methodSignatureForSelector:@selector(setFrame:)];
-        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-        [inv setSelector:@selector(setFrame:)];
-        [inv setTarget:mutable];
-        [inv setArgument:&frame atIndex:2];
-        [inv invoke];
-        if ([self.scene respondsToSelector:@selector(updateSettings:withTransitionContext:completion:)])
-            [self.scene updateSettings:mutable withTransitionContext:nil completion:nil];
-    } @catch (NSException *e) {}
+    if (!self.sceneHost) return;
+    self.sceneHost.view.frame = self.mainView.bounds;
+    [self.sceneHost setHostedFrame:self.mainView.bounds];
+    [self.sceneHost commitHostedFrame];
 }
 
 - (void)updateLayers {
-    if (!self.isOpen || !self.scene || !self.contentView) return;
-    for (UIView *sub in self.contentView.subviews) [sub removeFromSuperview];
-
-    if (![self.scene respondsToSelector:@selector(layerManager)]) return;
-    id layerManager = [self.scene layerManager];
-    NSArray *layers = [layerManager respondsToSelector:@selector(layers)] ? [layerManager layers] : nil;
-    if (![layers count] || ![self.contentView respondsToSelector:@selector(_createHostViewForLayer:)]) return;
-
-    UIWindow *keyboardWindow = [SOOverlayWindow keyboardHostWindow];
-    for (id layer in layers) {
-        UIView *hostView = [self.contentView _createHostViewForLayer:layer];
-        if (!hostView) continue;
-        NSString *className = NSStringFromClass([hostView class]);
-        if ([className isEqualToString:@"_UIExternalSceneLayerHostView"]) {
-            // 键盘层要独立窗口，否则会被窗口缩放/裁切
-            for (UIView *sub in keyboardWindow.subviews) [sub removeFromSuperview];
-            hostView.frame = keyboardWindow.bounds;
-            hostView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            [keyboardWindow addSubview:hostView];
-        } else {
-            hostView.frame = self.contentView.bounds;
-            hostView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            [self.contentView addSubview:hostView];
-        }
-    }
-    [self relayoutContent];
+    if (!self.isOpen) return;
+    [self.sceneHost retryAttach];
 }
 
 #pragma mark - 拖动 + 边缘吸附
