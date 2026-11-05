@@ -1,4 +1,4 @@
-name: Build SplitOver (roothide)
+name: Build SplitOver
 
 on:
   push:
@@ -7,33 +7,26 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq make git clang lld dpkg-dev fakeroot zip unzip xz-utils libplist-dev libssl-dev libtinfo6 curl
+          sudo curl -fL https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_x86_64 -o /usr/local/bin/ldid
+          sudo chmod +x /usr/local/bin/ldid
+          ldid -v || true
 
       - name: Install Theos + SDK
         run: |
           set -e
-          export THEOS=$HOME/theos
-          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$THEOS"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$HOME/theos"
           git clone --depth 1 https://github.com/theos/sdks "$HOME/sdks-tmp"
-          mkdir -p "$THEOS/sdks"
-          cp -R "$HOME/sdks-tmp"/iPhoneOS16.5.sdk "$THEOS/sdks/" || \
-            cp -R "$HOME/sdks-tmp"/iPhoneOS15.6.sdk "$THEOS/sdks/"
-          ls "$THEOS/sdks"
-
-      - name: Install ldid
-        run: |
-          set -e
-          mkdir -p "$HOME/bin"
-          echo "$HOME/bin" >> "$GITHUB_PATH"
-          if brew install ldid 2>/dev/null; then
-            echo "ldid via brew: $(command -v ldid)"
-          else
-            curl -fL https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macosx_arm64 -o "$HOME/bin/ldid"
-            chmod +x "$HOME/bin/ldid"
-          fi
-          "$HOME/bin/ldid" -v || ldid -v || true
+          mkdir -p "$HOME/theos/sdks"
+          cp -R "$HOME/sdks-tmp/iPhoneOS16.5.sdk" "$HOME/theos/sdks/"
+          ls "$HOME/theos/sdks"
 
       - name: Build roothide package
         run: |
@@ -45,11 +38,6 @@ jobs:
             ARCHS="arm64e" \
             TARGET=iphone:clang:16.5:15.0 \
             DEBUG=0
-
-      - name: Show package info
-        run: |
-          ls -l packages/ || true
-          for f in packages/*.deb; do echo "== $f"; dpkg-deb -I "$f" 2>/dev/null || true; done
 
       - name: Upload deb
         uses: actions/upload-artifact@v4
