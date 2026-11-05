@@ -22,6 +22,19 @@ jobs:
             cp -R "$HOME/sdks-tmp"/iPhoneOS15.6.sdk "$THEOS/sdks/"
           ls "$THEOS/sdks"
 
+      - name: Install ldid
+        run: |
+          set -e
+          mkdir -p "$HOME/bin"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+          if brew install ldid 2>/dev/null; then
+            echo "ldid via brew: $(command -v ldid)"
+          else
+            curl -fL https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macosx_arm64 -o "$HOME/bin/ldid"
+            chmod +x "$HOME/bin/ldid"
+          fi
+          "$HOME/bin/ldid" -v || ldid -v || true
+
       - name: Build roothide package
         run: |
           set -e
