@@ -9,6 +9,7 @@
 #import "SOAppHelper.h"
 #import "SOSettings.h"
 #import "SOBackgrounderManager.h"
+#import "SOSceneHost.h"
 
 // 顶部让出状态栏：保证分屏时仍能从最上方下拉通知中心
 static CGRect SOUsableScreen(void) {
