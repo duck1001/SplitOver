@@ -65,6 +65,10 @@ static const CGFloat kSOWheelHubSize  = 54.0;
 @property (nonatomic, strong) UILabel *hintLabel;
 @property (nonatomic, strong) UIImageView *ghostIcon;
 @property (nonatomic, assign) NSInteger selectedIndex;
+
+- (void)updateSelectionForPoint:(CGPoint)point;
+- (void)selectIndex:(NSInteger)index haptic:(BOOL)haptic;
+- (NSString *)selectedBundleID;
 @end
 
 @implementation SOWheelView
@@ -296,7 +300,7 @@ static const CGFloat kSOWheelHubSize  = 54.0;
     [gen impactOccurred];
 }
 
-- (void)setSticky:(BOOL)sticky { self.sticky = sticky; }
+- (void)setSticky:(BOOL)sticky { _sticky = sticky; }
 
 - (void)_handleTap:(UITapGestureRecognizer *)gesture {
     if (gesture.state != UIGestureRecognizerStateRecognized || !self.wheel) return;

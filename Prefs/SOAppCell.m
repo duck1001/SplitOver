@@ -6,6 +6,12 @@
 #import <Preferences/PSTableCell.h>
 #import <UIKit/UIKit.h>
 
+@interface UIImage (SOIcon)
++ (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bundleID
+                                              format:(int)format
+                                               scale:(CGFloat)scale;
+@end
+
 @interface SOAppCell : PSTableCell
 @end
 

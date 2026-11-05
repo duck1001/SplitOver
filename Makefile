@@ -27,12 +27,6 @@ SplitOver_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-function
 SplitOver_FRAMEWORKS = UIKit CoreGraphics QuartzCore CoreFoundation Foundation
 SplitOver_LIBRARIES = substrate
 
-# roothide 方案：libroothide + 随机化 jbroot 头
-ifeq ($(THEOS_PACKAGE_SCHEME),roothide)
-SplitOver_CFLAGS += -I$(THEOS_PROJECT_DIR)/roothide-devkit
-SplitOver_LDFLAGS += -L$(THEOS_PROJECT_DIR)/roothide-devkit/roothide -lroothide
-endif
-
 include $(THEOS_MAKE_PATH)/tweak.mk
 
 SUBPROJECTS += Prefs

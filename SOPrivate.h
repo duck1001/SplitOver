@@ -145,6 +145,7 @@ enum { BKSProcessAssertionReasonBackgroundUI = 7 };
 @interface SBIconView : UIView
 - (NSString *)applicationBundleIdentifier;
 - (NSString *)applicationBundleIdentifierForShortcuts;
++ (void)activateShortcut:(id)item withBundleIdentifier:(NSString *)bundleID forIconView:(id)iconView;
 @end
 
 @interface SBSApplicationShortcutItem : NSObject

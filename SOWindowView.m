@@ -8,6 +8,7 @@
 #import "SOSettings.h"
 #import "SOOverlayWindow.h"
 #import "SOAppHelper.h"
+#import "SOWindowManager.h"
 
 static const CGFloat kSOTitleHeight = 30.0;
 
