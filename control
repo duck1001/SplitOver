@@ -1,6 +1,6 @@
 Package: com.duck1001.splitover
 Name: SplitOver
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm
 Description: 悬浮窗分屏 — 左下/右下角呼出圆盘，滑动选中 App 直接以悬浮窗/半边形式分屏，底层 App 继续播放。
 Depiction: https://duck1001.github.io/depictions/com.duck1001.splitover/depiction.json
