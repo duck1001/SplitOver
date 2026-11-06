@@ -44,7 +44,9 @@ jobs:
 
           # Theos 的 Linux 目标默认 -fuse-ld=llvm，clang 会退回 GNU ld 报 llvm 模拟模式错误
           grep -rl "fuse-ld=llvm" "$THEOS/makefiles" 2>/dev/null | xargs -r sed -i 's/fuse-ld=llvm/fuse-ld=lld/g' || true
+          sed -i 's#-fuse-ld=$(SDKBINPATH)/$(_THEOS_TARGET_SDK_BIN_PREFIX)ld#-fuse-ld=/usr/bin/ld64.lld#' "$THEOS/makefiles/targets/_common/darwin_tail.mk"
           grep -rn "fuse-ld" "$THEOS/makefiles" | head
+          ls -l /usr/bin/ld64.lld
           ln -sf /usr/local/bin/ldid "$BIN/ldid"
           ls -l "$BIN"
 
