@@ -11,20 +11,17 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install toolchain
+      - name: Install ldid
         run: |
           set -e
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq make git clang lld llvm dpkg-dev fakeroot zip unzip xz-utils libplist-dev libssl-dev curl
-          sudo curl -fL https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_x86_64 -o /usr/local/bin/ldid
-          sudo chmod +x /usr/local/bin/ldid
-          ldid -v || true
+          brew install ldid
+          command -v ldid
 
-      - name: Install Theos (roothide) + SDK
+      - name: Install Theos + SDK
         run: |
           set -e
           export THEOS=$HOME/theos
@@ -32,23 +29,7 @@ jobs:
           git clone --depth 1 https://github.com/theos/sdks "$HOME/sdks-tmp"
           mkdir -p "$THEOS/sdks"
           cp -R "$HOME/sdks-tmp/iPhoneOS16.5.sdk" "$THEOS/sdks/"
-
-          # roothide/theos 只带 macOS 工具链，Linux 上把系统 LLVM 软链过去
-          BIN="$THEOS/toolchain/linux/iphone/bin"
-          mkdir -p "$BIN"
-          for tool in clang clang++ llvm-ar llvm-nm llvm-strip llvm-objcopy llvm-objdump; do
-            ln -sf "$(command -v $tool)" "$BIN/$tool"
-          done
-          ln -sf "$(command -v ld64.lld || command -v ld.lld)" "$BIN/ld"
-          ln -sf "$(command -v ld64.lld || command -v ld.lld)" "$BIN/ld64.lld"
-
-          # Theos 的 Linux 目标默认 -fuse-ld=llvm，clang 会退回 GNU ld 报 llvm 模拟模式错误
-          grep -rl "fuse-ld=llvm" "$THEOS/makefiles" 2>/dev/null | xargs -r sed -i 's/fuse-ld=llvm/fuse-ld=lld/g' || true
-          sed -i 's#-fuse-ld=$(SDKBINPATH)/$(_THEOS_TARGET_SDK_BIN_PREFIX)ld#-fuse-ld=/usr/bin/ld64.lld#' "$THEOS/makefiles/targets/_common/darwin_tail.mk"
-          grep -rn "fuse-ld" "$THEOS/makefiles" | head
-          ls -l /usr/bin/ld64.lld
-          ln -sf /usr/local/bin/ldid "$BIN/ldid"
-          ls -l "$BIN"
+          ls "$THEOS/sdks"
 
       - name: Build roothide package
         run: |
