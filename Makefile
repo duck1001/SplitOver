@@ -24,6 +24,10 @@ SplitOver_FILES = Tweak.x \
 	SOGestureController.m \
 	SOAppHelper.m \
 	SOSceneHost.m
+ifeq ($(shell uname),Linux)
+SplitOver_LDFLAGS += -fuse-ld=/usr/bin/ld64.lld
+endif
+
 SplitOver_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-function
 SplitOver_FRAMEWORKS = UIKit CoreGraphics QuartzCore CoreFoundation Foundation
 SplitOver_LIBRARIES = substrate
